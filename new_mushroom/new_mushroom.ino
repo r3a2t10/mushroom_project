@@ -30,9 +30,9 @@ int state = 0;
 char myName ;
 int ismotion = 0;
 int waitingTime = 20;
+
 boolean isPlaying  = false;
 boolean SideisPlaying = false;
-boolean LEDon = false;
 int count = 0; 
 int sidecount = 0;
 
@@ -124,6 +124,10 @@ void loop()
  //state = 2 : i am other theme
 
  if(state == 0){
+  isPlaying  = false;
+  SideisPlaying = false;
+  count = 0; 
+  sidecount = 0;
 	 //等待狀態
     if(ismotion == 1){
       //等待狀態收到訊號-立即成為主旋律
@@ -172,8 +176,9 @@ void loop()
           //主旋律已經播放到達時間
           isPlaying = false;
           myDFPlayer.stop();
-          state = 0;
+          state = 3;
           lightwhite();
+          writeDataFunction('d',myName);
        }
     }
  }
@@ -187,7 +192,7 @@ void loop()
       myDFPlayer.play(a);
       SideisPlaying = true;
       lightranbow();
-      writeDataFunction('s',myName);
+      //writeDataFunction('s',myName);
     }
     else{
         //副旋律正在播放
@@ -215,15 +220,17 @@ void loop()
           //副旋律已經播放到達時間
           SideisPlaying = false;
           myDFPlayer.stop();
-          state = 0;
+          state = 3;
           lightwhite();
           writeDataFunction('d',myName);
        }
     }
  }
  else if(state ==3){
+  //writeDataFunction('z',myName);
   //wait everyone in the same state
   if(Comp("allstop")==0){
+    //writeDataFunction('z',myName);
     state = 0;
   }
  }
@@ -248,10 +255,10 @@ void loop()
         myDFPlayer.stop();
         state = 2;
       }
-      writeDataFunction('t',state+'0');
+      //writeDataFunction('t',state+'0');
   }
   if(Comp("restart")==0){
-    setup();
+    state=0;
   }
 }
 
