@@ -34,6 +34,7 @@ int waitingTime = 60;
 
 boolean isPlaying  = false;
 boolean SideisPlaying = false;
+boolean haveSound = false;
 int count = 0; 
 int sidecount = 0;
 
@@ -126,14 +127,10 @@ void loop()
  digitalWrite(Dout_pin, HIGH);
  //Serial.println(state);
 
- // finite-state machine to decide what to do now
- //state = 0 : waiting for the first trigger
- //state = 1 : i am main theme
- //state = 2 : i am other theme
-
  if(state == 0){
   isPlaying  = false;
   SideisPlaying = false;
+  haveSound = false;
   myDFPlayer.stop();
   count = 0; 
   sidecount = 0;
@@ -142,6 +139,7 @@ void loop()
     if(ismotion == 1){
       //等待狀態收到訊號:成為主旋律，主機會去過濾多餘的主旋律
       writeDataFunction('m',myName);
+      //state = 2;
       //立馬跟server說大家的狀況使之分配各個蘑菇下個狀態
     }
     else{
@@ -157,8 +155,9 @@ void loop()
       myDFPlayer.volume(mainvolume);
       myDFPlayer.play(1);//播放第一首歌
       isPlaying = true;
+      haveSound = true;
+      writeDataFunction('f',myName);
       lightranbow();
-      
     }
     else{
         //主旋律正在播放
@@ -170,16 +169,25 @@ void loop()
           //主旋律播放還未達到週期時間
           if(ismotion==1){
             //又被碰到:沒關係你本來就該播放
+            if(haveSound==false){
+              haveSound=true;
+              writeDataFunction('f',myName);
+            }
             mainvolume = averagevolume;
             myDFPlayer.volume(mainvolume);
             lightranbow();
           }
           else{
             //沒被碰到:漸弱or靜音
-            mainvolume = mainvolume - 2;
-            Serial.println(mainvolume);
-            if(mainvolume == 0){
-              state = 3;
+            //Serial.print(mainvolume);
+            if(mainvolume == 10){
+              if(haveSound==true){
+                haveSound=false;
+                writeDataFunction('p',myName);
+              }
+            }
+            else{
+              mainvolume = mainvolume - 2;
             }
             myDFPlayer.volume(mainvolume);
             lightyellow();
@@ -196,13 +204,14 @@ void loop()
     //被告知為副旋律
     if(SideisPlaying == false){
       sidecount = 0 ;
-      sidevolume = averagevolume;
+      sidevolume = 10;
       myDFPlayer.volume(sidevolume);
       int a = myName - '0';
       myDFPlayer.play(a);
       SideisPlaying = true;
-      lightranbow();
-      //writeDataFunction('s',myName);
+      haveSound = false;
+      writeDataFunction('p',myName);
+      lightyellow();
     }
     else{
         //副旋律正在播放
@@ -214,16 +223,25 @@ void loop()
           //副旋律播放還未達到週期時間
           if(ismotion==1){
             //又被碰到:沒關係你本來就該播放
+            if(haveSound==false){
+              haveSound=true;
+              writeDataFunction('f',myName);
+            }
             sidevolume = averagevolume;
             myDFPlayer.volume(sidevolume);
             lightranbow();
           }
           else{
             //沒被碰到:漸弱or靜音
-            sidevolume = sidevolume - 2;
-            Serial.println(sidevolume);
-            if(sidevolume == 0){
-              state = 3;
+            //Serial.print(sidevolume);
+            if(sidevolume == 10){
+              if(haveSound==true){
+                haveSound=false;
+                writeDataFunction('p',myName);
+              }
+            }
+            else{
+              sidevolume = sidevolume - 2;
             }
             myDFPlayer.volume(sidevolume);
             lightyellow();
@@ -240,6 +258,7 @@ void loop()
   //wait everyone in the same state then start trigger
   isPlaying = false;
   SideisPlaying = false;
+  haveSound = false;
   myDFPlayer.stop();
   lightwhite();
   writeDataFunction('d',myName);

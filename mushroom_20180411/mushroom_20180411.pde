@@ -1,10 +1,12 @@
 import processing.serial.*;
 Serial[] port;
-int index=0;
+
 char[] inData = new char[6];
 boolean[] isPlaying = new boolean[6];
+boolean[] haveSound = new boolean[6];
 boolean anystart = false;
 boolean allisplaying;
+boolean allhavesound;
 void setup() {
    //frameRate(1);
    printArray(Serial.list());
@@ -14,14 +16,17 @@ void setup() {
      port[i]=new Serial(this,Serial.list()[i], 9600);
      println(i+"-"+Serial.list()[i]);
    }
-   // punt my string from a string to a char array
-   //strChar = stringOut.toCharArray();
+   init();
+}
+void init() {
    for(int i=0;i<inData.length;i++){
          inData[i]=0;
    }
-   index=0;
    for(int i=0;i<isPlaying.length;i++){
          isPlaying[i]=false;
+   }
+   for(int i=0;i<haveSound.length;i++){
+         haveSound[i]=false;
    }
 }
 void draw() {
@@ -63,6 +68,7 @@ void draw() {
         println(port[i]+" is main");
         port[i].write("urmain");
         isPlaying[i]=true;
+        haveSound[i]=true;
         anystart = true;
         
         //tell the side mushroom
@@ -81,8 +87,20 @@ void draw() {
         isPlaying[i]=false;
       }
       
+      else if(inData[0]=='p'){
+        println("mute port:"+i);
+        println(port[i]+" is mute");
+        haveSound[i]=false;
+      }
+      else if(inData[0]=='f'){
+        println("sound port:"+i);
+        println(port[i]+" is sound");
+        haveSound[i]=true;
+      }
+      
       //mush are been triggered
       if(anystart==true){
+        //=====================================
         printArray(isPlaying);
         //check every body is singing or not
         allisplaying = false;
@@ -93,10 +111,30 @@ void draw() {
         
         //if every body stop restart the period
         if(allisplaying==false){
+          //======================
+          init();
+          anystart=false;
           for(int j=0;j<Serial.list().length;j++){
             port[j].write("restart");
           }
+          
+        }
+        //=====================================
+        printArray(haveSound);
+        //check every body is singing or not
+        allhavesound = false;
+        for(int z=0;z<haveSound.length;z++){
+          allhavesound = allhavesound || haveSound[z];
+        }
+        println("allhavesound->"+allhavesound);
+        
+        //if every body stop restart the period
+        if(allhavesound==false){
+          init();
           anystart=false;
+          for(int j=0;j<Serial.list().length;j++){
+            port[j].write("restart");
+          }
         }
       }
     }
